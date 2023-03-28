@@ -61,6 +61,9 @@ void PID::update(float y, float y_ref)
     this->prev_e = e;
     this->prev_integral = integral;
 
+    // Send the PWM signal to the motor controller
+    analogWrite(PWM_pin,u);
+
 }
 
 float PID::getU(){

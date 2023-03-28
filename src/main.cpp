@@ -1,8 +1,10 @@
 #include <Arduino.h>
 #include "utils/PID.h"
 
+//vel max 35.7 mc/s
+
 // Define the target and current values
-float y_ref = 50.0;
+float y_ref = 30.0;
 float y = 0.0;
 
 // Define the control signal
@@ -18,8 +20,10 @@ unsigned long current_time = 0;
 //Define the variables used to obtain the wheel speed
 volatile int enc_time,enc_end,enc_start;
 volatile long enc_count = 0;
+ 
+String encdir ="";
 
-PID PID1(5, 0.003, 1, 3, 2, 4095, 0, sample_time);
+PID PID1(5, 0.003, 1, 2, 3, 4095, 0, sample_time);
 void enc_isr();
 void speed_data();
 
@@ -29,41 +33,38 @@ void setup() {
   Serial.begin(115200);
   
   // Set the pin mode
-  pinMode(2, OUTPUT);
-  pinMode(3, OUTPUT);
-  pinMode(26, INPUT_PULLUP);
-  pinMode(27, INPUT_PULLUP);
+  pinMode(2, OUTPUT); //PWM motor 1
+  pinMode(3, OUTPUT); //Pin dir motor
 
-  attachInterrupt(digitalPinToInterrupt(52),enc_isr,CHANGE);
-  attachInterrupt(digitalPinToInterrupt(53),enc_isr,CHANGE);
+  pinMode(26, INPUT_PULLUP); //CLK_enc
+  pinMode(27, INPUT_PULLUP); //DT_enc
+
+  attachInterrupt(digitalPinToInterrupt(26),enc_isr,CHANGE);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
 
   // Get the current speed
-    if(enc_count>=4 || enc_count<=-4){
+    if(enc_count>=400 || enc_count<=-400){
     enc_count=0;
 
     enc_end=millis();
     enc_time=enc_end-enc_start;
-    y=(0.0575*M_PI*1000/(30*enc_time));
+    y=(11.25*M_PI*1000/(30*enc_time)); //cm/s
     enc_start=enc_end;  
     
   }
 
   // Get the current time
   current_time = millis();
-  if(millis()>10000) y_ref=15;
+  if(millis()>=5000) y_ref=10;
 
   // Wait for the sampling time
-  while ((current_time - prev_time) < sample_time) {
+  if ((current_time - prev_time) < sample_time) {
     PID1.update(y,y_ref);
     u = PID1.getU();
   }
-
-  // Send the PWM signal to the motor controller
-  analogWrite(3,u);
 
   // Print the desired data
   speed_data();
@@ -74,14 +75,17 @@ void loop() {
 }
 
 void enc_isr(){
-  static int8_t lookup_table[] = {0,-1,1,0,1,0,0,-1,-1,0,0,1,0,1,-1,0};
-    static uint8_t enc_val = 0;
-    static uint8_t PIND = REG_PIOD_PDSR & 0xFF; //reads the 8 lower bits of port D
-    
-    enc_val = enc_val << 2;
-    enc_val = enc_val | ((PIND & 0b1100) >> 2);
- 
-    enc_count = enc_count + lookup_table[enc_val & 0b1111];
+// If the inputDT state is different than the inputCLK state then
+// the encoder is rotating clockwise
+  if (digitalRead(26) != digitalRead(27)) {
+    enc_count ++;
+    encdir ="CW";    
+   } else {
+    // Encoder is rotating counterclockwise
+    enc_count --;
+    encdir ="CCW";     
+   }
+
 }
 
 void speed_data(){
@@ -92,5 +96,5 @@ void speed_data(){
   Serial.print(y);
   Serial.print(" ");
   Serial.print(u);
-  Serial.print(" ");
+  Serial.println(" ");
 }
