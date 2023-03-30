@@ -16,6 +16,7 @@ unsigned long sample_time = 100; // in milliseconds
 // Define the variables used to compute the sample time
 unsigned long prev_time = 0;
 unsigned long current_time = 0;
+unsigned long time_change = 0;
 
 //Define the variables used to obtain the wheel speed
 volatile int enc_time,enc_end,enc_start;
@@ -23,7 +24,7 @@ volatile long enc_count = 0;
  
 String encdir ="";
 
-PID PID1(5, 0.003, 1, 2, 3, 4095, 0, sample_time);
+PID PID1(25, 0.003, 1, 6, 7, 255, 0, sample_time);
 void enc_isr();
 void speed_data();
 
@@ -33,11 +34,15 @@ void setup() {
   Serial.begin(115200);
   
   // Set the pin mode
-  pinMode(2, OUTPUT); //PWM motor 1
-  pinMode(3, OUTPUT); //Pin dir motor
 
   pinMode(26, INPUT_PULLUP); //CLK_enc
   pinMode(27, INPUT_PULLUP); //DT_enc
+
+  pinMode(8, OUTPUT); //PWM motor 1
+  pinMode(9, OUTPUT); //Pin dir motor
+
+  pinMode(28, INPUT_PULLUP); //CLK_enc
+  pinMode(29, INPUT_PULLUP); //DT_enc
 
   attachInterrupt(digitalPinToInterrupt(26),enc_isr,CHANGE);
 }
@@ -58,19 +63,22 @@ void loop() {
 
   // Get the current time
   current_time = millis();
-  if(millis()>=5000) y_ref=10;
+  time_change = current_time - prev_time;
+  if(millis()>=10000) y_ref=10;
 
   // Wait for the sampling time
-  if ((current_time - prev_time) < sample_time) {
+  if (time_change >= sample_time) {
     PID1.update(y,y_ref);
     u = PID1.getU();
+
+    // Update the previous time
+    prev_time = current_time;
+
+    // Print the desired data
+    speed_data();
   }
 
-  // Print the desired data
-  speed_data();
 
-  // Update the previous time
-  prev_time = current_time;
 
 }
 
@@ -89,7 +97,7 @@ void enc_isr(){
 }
 
 void speed_data(){
-  Serial.print(current_time - prev_time);
+  Serial.print(time_change);
   Serial.print(" ");
   Serial.print(y_ref);
   Serial.print(" ");
