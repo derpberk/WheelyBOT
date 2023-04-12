@@ -37,12 +37,6 @@ class PID {
     //Output getter
     float getU();
     
-
-    
-
-
-
-    
 };
 
 #endif
