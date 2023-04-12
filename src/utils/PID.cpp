@@ -34,9 +34,20 @@ PID::PID(float Kp, float Ki, float Kd, int PWM_pin, int PWM_direction_pin, float
     
 }
 
-void PID::update(float y, float y_ref)
+void PID::update(float y, float y_ref, char sent)
 {
     /* Here starts the Update of the PID */
+    //first check in which direction the motor is spinning, compared to y_ref
+    if(y_ref < 0){
+        if(sent == '1'){
+            digitalWrite(PWM_direction_pin, LOW);
+        }
+        y_ref = abs(y_ref);
+    }else{
+        if(sent == '0'){
+            digitalWrite(PWM_direction_pin, HIGH);
+        }
+    }
 
     // error
     this->e = y_ref - y;

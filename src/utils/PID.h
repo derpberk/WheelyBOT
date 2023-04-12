@@ -32,7 +32,7 @@ class PID {
     PID(float Kp, float Ki, float Kd, int PWM_pin, int PWM_direction_pin, float PWM_max, float PWM_min, float Ts); // Constructor of the class PID
 
     // This is the method that updates the PID controller
-    void update(float y, float y_ref);
+    void update(float y, float y_ref, char sent);
 
     //Output getter
     float getU();

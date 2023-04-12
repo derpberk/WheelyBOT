@@ -21,6 +21,9 @@ unsigned long time_change = 0;
 //Define the variables used to obtain the wheel speed
 volatile int enc_time[4],enc_end[4],enc_start[4];
 volatile long enc_count[4] = {0,0,0,0};
+
+//Define the variables to track the state of rotation
+volatile char sent[4] = {0,0,0,0};
  
 String encdir ="";
 
@@ -82,12 +85,12 @@ void loop() {
   current_time = millis();
   time_change = current_time - prev_time;
 
-  if(millis()>=10000) y_ref=10;
+  if(millis()>=10000) y_ref=-30;
 
   // Wait for the sampling time
   if (time_change >= sample_time) {
     for(int i=0; i<4; i++){
-      PIDs[i].update(y[i],y_ref);
+      PIDs[i].update(y[i],y_ref,sent[i]);
       u[i] = PIDs[i].getU();
     }
 
@@ -105,9 +108,11 @@ void enc_isr1(){
 // the encoder is rotating clockwise
   if (digitalRead(26) != digitalRead(27)) {
     enc_count[0] ++;
+    sent[0]= '0'; //adelante
    } else {
     // Encoder is rotating counterclockwise
     enc_count[0] --;
+    sent[0]= '1'; //Atras
    }
 
 }
@@ -116,9 +121,11 @@ void enc_isr2(){
 // the encoder is rotating clockwise
   if (digitalRead(28) != digitalRead(29)) {
     enc_count[1] ++;
+    sent[1]= '1';
    } else {
     // Encoder is rotating counterclockwise
     enc_count[1] --;
+    sent[1]= '0';
    }
 
 }
@@ -127,9 +134,11 @@ void enc_isr3(){
 // the encoder is rotating clockwise
   if (digitalRead(30) != digitalRead(31)) {
     enc_count[2] ++;
+    sent[2]= '1';
    } else {
     // Encoder is rotating counterclockwise
     enc_count[2] --;
+    sent[2]= '0';
    }
 
 }
@@ -138,9 +147,11 @@ void enc_isr4(){
 // the encoder is rotating clockwise
   if (digitalRead(32) != digitalRead(33)) {
     enc_count[3] ++;
+    sent[3]= '1';
    } else {
     // Encoder is rotating counterclockwise
     enc_count[3] --;
+    sent[3]= '0';
    }
 
 }
@@ -157,6 +168,10 @@ void speed_data(){
   Serial.print(y[2]);
   Serial.print(" ");
   Serial.print(y[3]);
+  Serial.print(" ");
+  Serial.print(sent[0]);
+  Serial.print(" ");
+  Serial.print(sent[1]);
   Serial.print(" ");
   Serial.print(u[0]);
   Serial.print(" ");
