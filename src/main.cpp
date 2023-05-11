@@ -11,7 +11,7 @@ float y[4] = {0,0,0,0};
 // Define the control signal
 float u[4]; 
 
-// Define the sampling time
+// Define the sampling time 
 unsigned long sample_time = 100; // in milliseconds
 
 // Define the variables used to compute the sample time
@@ -180,6 +180,28 @@ void enc_isr4(){
     sent[3]= '0';
    }
 
+}
+
+//CRC-8 - based on the CRC8 formulas by Dallas/Maxim
+//code released under the therms of the GNU GPL 3.0 license
+byte CRC8(const byte *data, size_t dataLength)
+{
+  byte crc = 0x00;
+  while (dataLength--)
+  {
+    byte extract = *data++;
+    for (byte tempI = 8; tempI; tempI--)
+  {
+      byte sum = (crc ^ extract) & 0x01;
+      crc >>= 1;
+      if (sum)
+    {
+        crc ^= 0x8C;
+      }
+      extract >>= 1;
+    }
+  }
+  return crc;
 }
 
 void speed_data(){
