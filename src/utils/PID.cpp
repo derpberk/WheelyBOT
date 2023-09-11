@@ -30,7 +30,7 @@ PID::PID(float Kp, float Ki, float Kd, int PWM_pin, int PWM_direction_pin, float
     pinMode(PWM_direction_pin, OUTPUT);
 
     // Set the initial direction of the motor
-    digitalWrite(PWM_direction_pin, HIGH);
+    digitalWrite(PWM_direction_pin, HIGH); //mot 2,3,4 adelante, 1 hacia atras
     
 }
 
@@ -40,12 +40,12 @@ void PID::update(float y, float y_ref, char sent)
     //first check in which direction the motor is spinning, compared to y_ref
     if(y_ref < 0){
         if(sent == '1'){
-            digitalWrite(PWM_direction_pin, LOW);
+            digitalWrite(PWM_direction_pin, HIGH);
         }
         y_ref = abs(y_ref);
     }else{
         if(sent == '0'){
-            digitalWrite(PWM_direction_pin, HIGH);
+            digitalWrite(PWM_direction_pin, LOW);
         }
     }
 

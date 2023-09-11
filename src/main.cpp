@@ -5,11 +5,11 @@
 //Dif. mode
 
 // Define the target and current values
-float y_ref[4] = {30,30,30,30};
+float y_ref[4] = {0,0,0,0};
 float y[4] = {0,0,0,0};
 
 // Define the control signal
-float u[4]; 
+float u[4] = {0,0,0,0};
 
 // Define the sampling time 
 unsigned long sample_time = 100; // in milliseconds
@@ -30,20 +30,22 @@ volatile char sent[4] = {0,0,0,0};
 const int BUFFER_SIZE = 10;
 const char STX = '\x24';
 const char ETX = '\x3b';
-char buf[BUFFER_SIZE];
-int vel, velA;
+char buf[BUFFER_SIZE],VEL[3],ANG[3],msg[7],crc,check;
+int vel,sen,ang;
 
- 
-PID PIDs[4]={PID(5, 0.03, 1, 8, 9, 255, 0, sample_time), //mot 1 
-             PID(5, 0.03, 1, 6, 7, 255, 0, sample_time), //mot 2
-             PID(5, 0.03, 1, 4, 5, 255, 0, sample_time), //mot 3
-             PID(5, 0.03, 1, 2, 3, 255, 0, sample_time)  //mot 4
+                              //pwm, dir
+PID PIDs[4]={PID(0.1, 0.01, 0.0005, 6, 7, 255, 0, sample_time), //mot 1 
+             PID(0.1, 0.01, 0.0005, 8, 9, 255, 0, sample_time), //mot 2
+             PID(0.1, 0.01, 0.0005, 4, 5, 255, 0, sample_time), //mot 3
+             PID(0.1, 0.01, 0.0005, 2, 3, 255, 0, sample_time)  //mot 4
               };
 
 void enc_isr1();
 void enc_isr2();
 void enc_isr3();
 void enc_isr4();
+
+byte CRC8(const byte *data, size_t dataLength);
 
 void speed_data();
 
@@ -54,8 +56,8 @@ void setup() {
   
   // Set the pin mode
 
-  pinMode(26, INPUT_PULLUP); //CLK_enc mot1
-  pinMode(27, INPUT_PULLUP); //DT_enc
+  pinMode(26, INPUT_PULLUP); //CLK_enc mot1 (a - verde) 
+  pinMode(27, INPUT_PULLUP); //DT_enc (b - amarillo)
 
   pinMode(28, INPUT_PULLUP); //CLK_enc mot2
   pinMode(29, INPUT_PULLUP); //DT_enc
@@ -70,31 +72,45 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(28),enc_isr2,CHANGE); //Enc Mot2
   attachInterrupt(digitalPinToInterrupt(30),enc_isr3,CHANGE); //Enc Mot3
   attachInterrupt(digitalPinToInterrupt(32),enc_isr4,CHANGE); //Enc Mot4
+  
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
 
-  // check if data is available
-  if (Serial.available() > 0) {
+  if (Serial.available() > 0)
+  {
     if (Serial.read() == STX)
     {
-      // read the incoming bytes:
-      int rlen = Serial.readBytesUntil(ETX, buf, BUFFER_SIZE);
+      Serial.readBytes(buf, BUFFER_SIZE);
 
-      vel = (buf[0] -'0') * 10 + buf[1] - '0';
-      velA = (buf[3] -'0') * 10 + buf[4] - '0';
+      if (buf[9] == ETX)
+      {
+      VEL[0]=buf[0];
+      VEL[1]=buf[1];
+      VEL[2]='\0';
+      ANG[0]=buf[3];
+      ANG[1]=buf[4];
+      ANG[2]='\0';
+      sen=atoi(&buf[6]);
+      vel=atoi(VEL);
+      ang=atoi(ANG);
+      crc=buf[8];
 
-      //Add CRC When jetson gets implemented
+      for(int i=0; i<8; i++){
+        msg[i]=buf[i];
+      }
 
+      check = CRC8((byte*)&msg,7);
+
+      if(check==crc){
+        y_ref[0]=(2*vel-ang*30)/(2); //velangular=(2*vel-velA*L)/(2*R); vel lineal = velANG*R
+        y_ref[1]=(2*vel+ang*30)/(2); //cambiar 30 por la distancia entre ruedas real
+        y_ref[2]=y_ref[0];
+        y_ref[3]=y_ref[1];
+        }
+      }
     }
   }
-
-  //Obtain desired speed for each pair of motors
-  y_ref[0]=(2*vel-velA*30)/(2); //velangular=(2*vel-velA*L)/(2*R); vel lineal = velANG*R
-  y_ref[1]=(2*vel+velA*30)/(2); //cambiar 30 por la distancia entre ruedas real
-  y_ref[2]=y_ref[0];
-  y_ref[3]=y_ref[1];
 
   // Get the current speed
   for(int i=0; i<4; i++){
@@ -103,7 +119,7 @@ void loop() {
 
       enc_end[i]=millis();
       enc_time[i]=enc_end[i]-enc_start[i];
-      y[i]=(11.25*M_PI*1000/(30*enc_time[i])); //cm/s
+      y[i]=(12*M_PI*1000/(30*enc_time[i])); //cm/s
       enc_start[i]=enc_end[i];
     
     }
@@ -147,11 +163,11 @@ void enc_isr2(){
 // the encoder is rotating clockwise
   if (digitalRead(28) != digitalRead(29)) {
     enc_count[1] ++;
-    sent[1]= '1';
+    sent[1]= '0';
    } else {
     // Encoder is rotating counterclockwise
     enc_count[1] --;
-    sent[1]= '0';
+    sent[1]= '1';
    }
 
 }
@@ -203,7 +219,7 @@ byte CRC8(const byte *data, size_t dataLength)
   }
   return crc;
 }
-
+ 
 void speed_data(){
   Serial.print(time_change);
   Serial.print(" ");
