@@ -30,8 +30,8 @@ volatile char sent[4] = {0,0,0,0};
 const int BUFFER_SIZE = 10;
 const char STX = '\x24';
 const char ETX = '\x3b';
-char buf[BUFFER_SIZE],VEL[3],ANG[3],msg[7],crc,check;
-int vel,sen,ang;
+char buf[BUFFER_SIZE],VEL[3],ANG[3],msg[10];
+int vel,sen,ang,crc,check;
 
                               //pwm, dir
 PID PIDs[4]={PID(0.1, 0.01, 0.0005, 6, 7, 255, 0, sample_time), //mot 1 
@@ -81,30 +81,67 @@ void loop() {
   {
     if (Serial.read() == STX)
     {
-      Serial.readBytes(buf, BUFFER_SIZE);
+      char buffer[64]; // Crear un búfer para almacenar los datos (ajusta el tamaño según sea necesario)
+      int bytesRead = Serial.readBytesUntil(';', buffer, sizeof(buffer)); // Leer hasta el punto y coma
+      buffer[bytesRead] = '\0'; // Agregar un carácter nulo para que buffer sea una cadena válida
 
-      if (buf[9] == ETX)
-      {
-      VEL[0]=buf[0];
-      VEL[1]=buf[1];
-      VEL[2]='\0';
-      ANG[0]=buf[3];
-      ANG[1]=buf[4];
-      ANG[2]='\0';
-      sen=atoi(&buf[6]);
-      vel=atoi(VEL);
-      ang=atoi(ANG);
-      crc=buf[8];
+      if (bytesRead > 0) {
+        char* token = strtok(buffer, " "); // Dividir la cadena en tokens usando el espacio como separador
+        int valueIndex = 0;
+        while (token != NULL) {
+          if (valueIndex < 3) { // Solo procesar los primeros 3 tokens (excluyendo el último)
+            strcat(msg, token); // Concatenar el token a la variable msg
+            strcat(msg, " ");   // Agregar un espacio entre los tokens
+          }
+          if (valueIndex == 0) { // Cuando valueIndex sea 0, estamos en el valor de X
+            vel = atoi(token); // Convertir el token a un entero
+          }
 
-      for(int i=0; i<8; i++){
-        msg[i]=buf[i];
+          if (valueIndex == 1) { // Cuando valueIndex sea 1, estamos en el valor de X
+            ang = atoi(token); // Convertir el token a un entero
+          }
+
+          if (valueIndex == 2) { // Cuando valueIndex sea 2, estamos en el valor de X
+            sen = atoi(token); // Convertir el token a un entero
+          }
+
+          if (valueIndex == 3) { // Cuando valueIndex sea 3, estamos en el valor de X
+            crc = atoi(token); // Convertir el token a un entero
+            break; // Salir del bucle una vez que hayamos encontrado el valor de X
+          }
+
+          token = strtok(NULL, " "); // Obtener el siguiente token
+          valueIndex++;
+        }
+    
+      size_t msgLength = strlen(msg);
+      // Desplaza los caracteres existentes hacia la derecha para hacer espacio al nuevo carácter
+      for (int i = msgLength; i > 0; i--) {
+        msg[i] = msg[i - 1];
       }
 
-      check = CRC8((byte*)&msg,7);
+      msg[0] = '$';
+      msg[msgLength] = '\0';
+
+      msgLength = strlen(msg);
+      check = CRC8((byte*)&msg,msgLength);
+
+      Serial.print(vel);
+      Serial.print(" ");
+      Serial.print(ang);
+      Serial.print(" ");
+      Serial.print(sen);
+      Serial.print(" ");
+      Serial.print(crc);
+      Serial.print(" ");
+      Serial.print(msg);
+      Serial.print(" ");
+      Serial.print(check);
+      Serial.println(" ");
 
       if(check==crc){
-        y_ref[0]=(2*vel-ang*30)/(2); //velangular=(2*vel-velA*L)/(2*R); vel lineal = velANG*R
-        y_ref[1]=(2*vel+ang*30)/(2); //cambiar 30 por la distancia entre ruedas real
+        y_ref[0]=(2*vel-ang*24)/(2); //velangular=(2*vel-velA*L)/(2*R); vel lineal = velANG*R
+        y_ref[1]=(2*vel+ang*24)/(2); 
         y_ref[2]=y_ref[0];
         y_ref[3]=y_ref[1];
         }
@@ -140,7 +177,7 @@ void loop() {
     prev_time = current_time;
 
     // Print the desired data
-    speed_data();
+    //speed_data();
   }
 
 }
