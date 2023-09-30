@@ -1,0 +1,2 @@
+serial
+-DCATKIN_DEVEL_PREFIX=/home/aceti/ros_workspace/devel -DCMAKE_INSTALL_PREFIX=/home/aceti/ros_workspace/install -G Unix Makefiles
