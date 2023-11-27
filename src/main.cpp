@@ -29,6 +29,7 @@ static const uint8_t crc_table[] = {
 // Objetivo y la velocidad actual
 float y_ref[4] = {0,0,0,0};
 float y[4] = {0,0,0,0};
+float y_p[4] = {0,0,0,0};
 
 // Señal de control
 float u[4] = {0,0,0,0};
@@ -40,6 +41,10 @@ unsigned long sample_time = 100; // en milisegundos
 unsigned long prev_time = 0;
 unsigned long current_time = 0;
 unsigned long time_change = 0;
+
+// Variables usadas para la deteccion del frenado de motores
+unsigned long inactiveTime = 0;
+unsigned long inactiveLimit = 500;
 
 // Variables para el calculo de la velocidad
 volatile int enc_time[4],enc_end[4],enc_start[4];
@@ -53,6 +58,7 @@ const char STX = '\x24';
 const char ETX = '\x3b';
 char msg[15];
 int vel,sen,ang,crc,check;
+bool blck=true;
                                  //pwm, dir
 PID PIDs[4]={PID(0.1, 0.01, 0.0005, 6, 7, 255, 0, sample_time), //mot 1 
              PID(0.1, 0.01, 0.0005, 8, 9, 255, 0, sample_time), //mot 2
@@ -122,7 +128,7 @@ void loop() {
             ang = atoi(token); 
           }
 
-          if (valueIndex == 2) { // Valor sobrante, se deja como ejemplo para ver como se añaden mas parametros al mensaje
+          if (valueIndex == 2) { // Seleccion de modo diferencial / Omnidireccional
             sen = atoi(token); 
           }
 
@@ -165,10 +171,18 @@ void loop() {
       memset(msg, '\0', sizeof(msg)); // Una vez hecho el calculo, borramos la cadena para estar listos para la siguiente
 
       if(check==crc){
-        y_ref[0]=(2*vel-ang*24)/(2); // velangular=(2*vel-velA*L)/(2*R); vel lineal = velANG*R
-        y_ref[1]=(2*vel+ang*24)/(2); 
-        y_ref[2]=y_ref[0]; // Hacemos como si tuvieramos dos ruedas
-        y_ref[3]=y_ref[1];
+        switch(sen){
+          case 0:
+            y_ref[0]=(2*vel-ang*24)/(2); // velangular=(2*vel-velA*L)/(2*R); vel lineal = velANG*R
+            y_ref[1]=(2*vel+ang*24)/(2); 
+            y_ref[2]=y_ref[0]; // Hacemos como si tuvieramos dos ruedas
+            y_ref[3]=y_ref[1];
+          break;
+          case 1:
+            //modo omni
+          break;
+         }
+         blck = false;
         }
       }
     }
@@ -185,14 +199,24 @@ void loop() {
       enc_start[i]=enc_end[i];
     
     }
-  }
-    
+    current_time = millis();
+    if y_p[i] != y[i] {
+      inactiveTime == current_time;
+      }
+
+    y_p[i] = y[i]
+
+    if (current_time-inactiveTime >= inactiveLimit){
+      y[i] = 0;
+    }
+
   // Obtenemos el tiempo actual
   current_time = millis();
   time_change = current_time - prev_time;
 
   // Bucle de control con un tiempo de muestreo
-  if (time_change >= sample_time) {
+
+  if (time_change >= sample_time && blck==false) {
     for(int i=0; i<4; i++){
       PIDs[i].update(y[i],y_ref[i],sent[i]);
       u[i] = PIDs[i].getU();
