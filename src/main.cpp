@@ -26,7 +26,7 @@ static const uint8_t crc_table[] = {
  0xfa, 0xfd, 0xf4, 0xf3
 };
 
-// Objetivo y la velocidad actual
+// Objetivo y la velocidad actual/pasada
 float y_ref[4] = {0,0,0,0};
 float y[4] = {0,0,0,0};
 float y_p[4] = {0,0,0,0};
