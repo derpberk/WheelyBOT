@@ -179,7 +179,10 @@ void loop() {
             y_ref[3]=y_ref[1];
           break;
           case 1:
-            //modo omni
+            y_ref[0]=
+            y_ref[1]=
+            y_ref[2]=
+            y_ref[3]=
           break;
          }
          blck = false;
@@ -200,7 +203,7 @@ void loop() {
     
     }
     current_time = millis();
-    if y_p[i] != y[i] {
+    if (y_p[i] != y[i]) {
       inactiveTime == current_time;
       }
 
