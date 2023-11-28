@@ -53,11 +53,15 @@ volatile long enc_count[4] = {0,0,0,0};
 // Variables para el seguimiento del sentido de giro
 volatile char sent[4] = {0,0,0,0};
 
+// Dimensiones robot movil
+int Lx = 30 //cm
+int Ly = 20 //cm
+
 // Variables para la transmision de datos
 const char STX = '\x24';
 const char ETX = '\x3b';
 char msg[15];
-int vel,sen,ang,crc,check;
+int Vx,Vy,sen,ang,crc,check;
 bool blck=true;
                                  //pwm, dir
 PID PIDs[4]={PID(0.1, 0.01, 0.0005, 6, 7, 255, 0, sample_time), //mot 1 
@@ -116,23 +120,27 @@ void loop() {
         char* token = strtok(buffer, " "); // Dividir la cadena en tokens usando el espacio como separador
         int valueIndex = 0;
         while (token != NULL) {
-          if (valueIndex < 3) { // En la jetson se genera un crc8 de un mensaje del tipo: $XX XX X, luego se añade el ; antes de enviarlo. Extraemos ese mensaje para el calculo correcto del crc8
+          if (valueIndex < 4) { // En la jetson se genera un crc8 de un mensaje del tipo: $XX XX X, luego se añade el ; antes de enviarlo. Extraemos ese mensaje para el calculo correcto del crc8
             strcat(msg, token); // Hay que tener en cuenta que del buffer solo extragimos XX XX X, ya que $ y ; son excluidos al ser las condiciones para guardar el mensaje
             strcat(msg, " ");   
           }
-          if (valueIndex == 0) { // Cuando valueIndex sea 0, estamos en el valor de velocidad lineal
-            vel = atoi(token); // Lo convertimos en entero
+          if (valueIndex == 0) { // Cuando valueIndex sea 0, estamos en el valor de velocidad lineal / Vx
+            Vx = atoi(token); // Lo convertimos en entero
           }
 
-          if (valueIndex == 1) { // Velocidad angular
+          if (valueIndex == 1) { // Vy
+            Vy = atoi(token); 
+          }
+
+          if (valueIndex == 2) { // Velocidad angular
             ang = atoi(token); 
           }
 
-          if (valueIndex == 2) { // Seleccion de modo diferencial / Omnidireccional
+          if (valueIndex == 3) { // Seleccion de modo diferencial / Omnidireccional
             sen = atoi(token); 
           }
 
-          if (valueIndex == 3) { // Valor del CRC8 recibido
+          if (valueIndex == 4) { // Valor del CRC8 recibido
             crc = atoi(token);
             break; // Salir del bucle una vez que hayamos encontrado el valor de CRC
           }
@@ -173,16 +181,16 @@ void loop() {
       if(check==crc){
         switch(sen){
           case 0:
-            y_ref[0]=(2*vel-ang*24)/(2); // velangular=(2*vel-velA*L)/(2*R); vel lineal = velANG*R
-            y_ref[1]=(2*vel+ang*24)/(2); 
+            y_ref[0]=(2*Vx-ang*24)/(2); // velangular=(2*vel-velA*L)/(2*R); vel lineal = velANG*R
+            y_ref[1]=(2*Vx+ang*24)/(2); 
             y_ref[2]=y_ref[0]; // Hacemos como si tuvieramos dos ruedas
             y_ref[3]=y_ref[1];
           break;
           case 1:
-            y_ref[0]=
-            y_ref[1]=
-            y_ref[2]=
-            y_ref[3]=
+            y_ref[0]=Vx-Vy-(((Lx-Ly)/2)*ang)
+            y_ref[1]=Vx+Vy+(((Lx-Ly)/2)*ang)
+            y_ref[2]=Vx+Vy-(((Lx-Ly)/2)*ang)
+            y_ref[3]=Vx-Vy+(((Lx-Ly)/2)*ang)
           break;
          }
          blck = false;
