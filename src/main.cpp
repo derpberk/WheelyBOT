@@ -55,7 +55,7 @@ volatile char sent[4] = {0,0,0,0};
 
 // Dimensiones robot movil
 int Lx = 19; //cm
-int Ly = 28; //cm
+int Ly = 29; //cm
 
 // Variables para la transmision de datos
 const char STX = '\x24';
@@ -65,10 +65,10 @@ int Vx,Vy,sen,ang,crc,check;
 bool blck=true;
 
                                  //pwm, dir
-PID PIDs[4]={PID(0.1, 0.01, 0.0005, 6, 7, 255, 0, sample_time), //mot 1 
-             PID(0.1, 0.01, 0.0005, 8, 9, 255, 0, sample_time), //mot 2
-             PID(0.1, 0.01, 0.0005, 4, 5, 255, 0, sample_time), //mot 3
-             PID(0.1, 0.01, 0.0005, 2, 3, 255, 0, sample_time)  //mot 4
+PID PIDs[4]={PID(0.1, 0.01, 0.005, 6, 7, 255, 0, sample_time), //mot 1 
+             PID(0.1, 0.01, 0.005, 8, 9, 255, 0, sample_time), //mot 2
+             PID(0.1, 0.01, 0.005, 4, 5, 255, 0, sample_time), //mot 3
+             PID(0.1, 0.01, 0.005, 2, 3, 255, 0, sample_time)  //mot 4
               };
 
 void enc_isr1();
