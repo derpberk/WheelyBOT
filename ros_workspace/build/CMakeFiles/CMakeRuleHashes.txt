@@ -1,0 +1,15 @@
+# Hashes of file build rules.
+c616fca62d620ed958f9be19d04302f4 /home/aceti/ros_workspace/devel/include/serial/trama.h
+813369cfd3f0da751180d8b23fb86660 /home/aceti/ros_workspace/devel/lib/python2.7/dist-packages/serial/msg/__init__.py
+68c2547046f428e8696e24bdd4029576 /home/aceti/ros_workspace/devel/lib/python2.7/dist-packages/serial/msg/_trama.py
+625a404e3e383e57b6a0c197cdcf0493 /home/aceti/ros_workspace/devel/share/common-lisp/ros/serial/msg/trama.lisp
+5563aaf3a87b7c51395fca111a6d904f /home/aceti/ros_workspace/devel/share/gennodejs/ros/serial/msg/trama.js
+4fa2691ad82985897d62895b3939183d /home/aceti/ros_workspace/devel/share/roseus/ros/serial/manifest.l
+10c160ab9b4d8ef3a239f4879d87914a /home/aceti/ros_workspace/devel/share/roseus/ros/serial/msg/trama.l
+ca5a0d53f3f7b4303f4f19d8004c1885 CMakeFiles/clean_test_results
+611f4c42b529792b0fb41805f262a029 serial/CMakeFiles/_serial_generate_messages_check_deps_trama
+ad634ba3dda6d5145224d8c4c90cce42 serial/CMakeFiles/serial_generate_messages_cpp
+ad634ba3dda6d5145224d8c4c90cce42 serial/CMakeFiles/serial_generate_messages_eus
+ad634ba3dda6d5145224d8c4c90cce42 serial/CMakeFiles/serial_generate_messages_lisp
+ad634ba3dda6d5145224d8c4c90cce42 serial/CMakeFiles/serial_generate_messages_nodejs
+ad634ba3dda6d5145224d8c4c90cce42 serial/CMakeFiles/serial_generate_messages_py

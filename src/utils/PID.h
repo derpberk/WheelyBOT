@@ -12,10 +12,12 @@ class PID {
     float y_prev; // this is the input of the PID controller in t-1
     float u; // this is the output of the PID controller
     float e; // this is the error of the PID controller
-    float e_integral; // this is the integral of the error of the PID controller
+    float prev_e; // this is the error of the PID controller in t-1
+    float prev_integral; // this is the integral of the error of the PID controller
     float Kp; // this is the proportional gain of the PID controller
     float Ki; // this is the integral gain of the PID controller
     float Kd; // this is the derivative gain of the PID controller
+    float Ts; // this is the sample time
 
     int PWM_pin; // this is the pin where the PWM signal is sent to the motor
     int PWM_direction_pin; // this is the pin where the direction of the motor is set
@@ -27,16 +29,13 @@ class PID {
 
     // Here we define the methods of the class PID
     // This is the constructor of the class PID
-    PID(float Kp, float Ki, float Kd, int PWM_pin, int PWM_direction_pin, float PWM_max, float PWM_min); // Constructor of the class PID
+    PID(float Kp, float Ki, float Kd, int PWM_pin, int PWM_direction_pin, float PWM_max, float PWM_min, float Ts); // Constructor of the class PID
 
     // This is the method that updates the PID controller
-    void update(float y, float y_ref);
-    
+    void update(float y, float y_ref, char sent);
 
-    
-
-
-
+    //Output getter
+    float getU();
     
 };
 
