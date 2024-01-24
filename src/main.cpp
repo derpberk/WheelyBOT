@@ -54,8 +54,8 @@ volatile long enc_count[4] = {0,0,0,0};
 volatile char sent[4] = {0,0,0,0};
 
 // Dimensiones robot movil
-int Lx = 30 //cm
-int Ly = 20 //cm
+int Lx = 19; //cm
+int Ly = 28; //cm
 
 // Variables para la transmision de datos
 const char STX = '\x24';
@@ -63,6 +63,7 @@ const char ETX = '\x3b';
 char msg[15];
 int Vx,Vy,sen,ang,crc,check;
 bool blck=true;
+
                                  //pwm, dir
 PID PIDs[4]={PID(0.1, 0.01, 0.0005, 6, 7, 255, 0, sample_time), //mot 1 
              PID(0.1, 0.01, 0.0005, 8, 9, 255, 0, sample_time), //mot 2
@@ -187,10 +188,10 @@ void loop() {
             y_ref[3]=y_ref[1];
           break;
           case 1:
-            y_ref[0]=Vx-Vy-(((Lx-Ly)/2)*ang)
-            y_ref[1]=Vx+Vy+(((Lx-Ly)/2)*ang)
-            y_ref[2]=Vx+Vy-(((Lx-Ly)/2)*ang)
-            y_ref[3]=Vx-Vy+(((Lx-Ly)/2)*ang)
+            y_ref[0]=Vx-Vy-(((Lx-Ly)/2)*ang);
+            y_ref[1]=Vx+Vy+(((Lx-Ly)/2)*ang);
+            y_ref[2]=Vx+Vy-(((Lx-Ly)/2)*ang);
+            y_ref[3]=Vx-Vy+(((Lx-Ly)/2)*ang);
           break;
          }
          blck = false;
@@ -210,24 +211,25 @@ void loop() {
       enc_start[i]=enc_end[i];
     
     }
+  
     current_time = millis();
     if (y_p[i] != y[i]) {
-      inactiveTime == current_time;
+      inactiveTime = current_time;
       }
 
-    y_p[i] = y[i]
+    y_p[i] = y[i];
 
     if (current_time-inactiveTime >= inactiveLimit){
       y[i] = 0;
     }
-
+  }
   // Obtenemos el tiempo actual
   current_time = millis();
   time_change = current_time - prev_time;
 
   // Bucle de control con un tiempo de muestreo
 
-  if (time_change >= sample_time && blck==false) {
+  if (time_change >= sample_time && blck==false) { //Bloqueamos el control hasta que no se reciba una primera referencia valida
     for(int i=0; i<4; i++){
       PIDs[i].update(y[i],y_ref[i],sent[i]);
       u[i] = PIDs[i].getU();
